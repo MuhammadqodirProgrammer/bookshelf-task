@@ -40,9 +40,9 @@ export const HomeContainer = () => {
   const [DeleteBook, { error: deleteError,isSuccess:isSuccessDeleted, isError:isErrorDeleted }] =
     useDeleteBookMutation();
 
-  const handleCreateBook = useCallback(async  (data: any) => {
+  const handleCreateBook = useCallback(  (data: any) => {
     console.log(data , isSuccessCreated, "data");
-    await  AddBook(data);
+      AddBook(data);
   
     if (isSuccessCreated) {
       () => snacbar({ message: "Book added bookshelf successfully!" });
