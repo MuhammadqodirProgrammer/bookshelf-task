@@ -1,0 +1,7 @@
+export const SignUp = '/signup'
+export const GetUser = '/myself'
+export const GetBook = '/books/:title'
+export const CreateBook = '/books'
+export const GetAllBooks = '/books'
+export const UpdateBook = '/books/:id'
+export const DeleteBook = '/books/:id'
