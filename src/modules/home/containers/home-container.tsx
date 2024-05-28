@@ -18,6 +18,7 @@ import { useSearchContext } from '../../../context/search'
 import Loader from '../../../components/loader/loader'
 import { useSnackbar } from '../../../context/snackbar'
 import { useGetProductsQuery } from 'store/rtk-query/productApi'
+import { useAddBookMutation, useGetAllBooksQuery, useGetMySelfQuery } from 'store/rtk-query/book-query'
 
 export const HomeContainer = () => {
   const addBookDialog = useDialog()
@@ -56,9 +57,10 @@ export const HomeContainer = () => {
     const hasValue = title ? { query: { title } } : undefined
     getBookList.getList(hasValue)
   }, [title])
-  
-//   const data =useGetProductsQuery()
-// console.log(data );
+  const filters = { category: '' }; // Example filter object
+  const  { data, isLoading, error }  =useGetMySelfQuery({})
+  const  [AddBook, { error: addError, data: addData }]  =useAddBookMutation()
+console.log(AddBook({isbn: "isbn20"}), addData ,addError,"postBook");
 
   return (
     <BaseLayout>

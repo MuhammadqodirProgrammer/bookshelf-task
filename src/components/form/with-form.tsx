@@ -24,9 +24,9 @@ function withForm (Component: any, FormProps?: any) {
         {(form: any) => {
           return (
             <>
-            {/* <Form>
+            <Form placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>
               <Component {...rest} form={form}/>
-            </Form> */}
+            </Form>
             </>
           )
         }}
