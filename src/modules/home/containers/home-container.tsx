@@ -8,7 +8,7 @@ import { BookCard } from "../../../components/card/book-card";
 import { BaseLayout } from "../../../layout";
 import useDialog from "../../../hooks/useDialog";
 import BookAddDialogue from "../components/book-add-dialogue";
-import {  createBook, getListBook, updateBook } from "../api/api";
+import { createBook, getListBook, updateBook } from "../api/api";
 import { useGetList } from "../../../hooks/useGetList";
 import BookActionRowMenu from "../components/book-action-row";
 import { usePut } from "../../../hooks/usePut";
@@ -30,36 +30,54 @@ import { usePost } from "hooks/usePost";
 export const HomeContainer = () => {
   const addBookDialog = useDialog();
   const statusBook = usePut(updateBook);
-  const addBook = usePost(createBook)
+  const addBook = usePost(createBook);
   const snacbar = useSnackbar();
   const { searchValue } = useSearchContext();
   const title = propOr("", "title", searchValue);
 
-  const { data, isLoading,  refetch } = useGetAllBooksQuery({});
-  const { data:mySelfData,  } = useGetMySelfQuery({});
+  const { data, isLoading, refetch } = useGetAllBooksQuery({});
+  const { data: mySelfData } = useGetMySelfQuery({});
   const [AddBook, { error: addError, isSuccess: isSuccessCreated, isError }] =
     useAddBookMutation();
-  const [DeleteBook, { error: deleteError,isSuccess:isSuccessDeleted, isError:isErrorDeleted }] =
-    useDeleteBookMutation();
-
-  const handleCreateBook = useCallback(  (data: any) => {
-    console.log(data , isSuccessCreated, "data");
-      AddBook(data);
-   addBook
-      .postData({ data: data })
-      .then(() => snacbar({ message: 'Book added bookshelf successfully!' }))
-      .then(() => refetch())
-      .then(() => addBookDialog.handleClose())
-    if (isSuccessCreated) {
-      () => snacbar({ message: "Book added bookshelf successfully!" });
+  const [
+    DeleteBook,
+    {
+      error: deleteError,
+      isSuccess: isSuccessDeleted,
+      isError: isErrorDeleted,
+    },
+  ] = useDeleteBookMutation();
+  // detete book
+  const handleDeleteBook = useCallback((id: number) => {
+    DeleteBook(id);
+    if (isSuccessDeleted) {
+      () => snacbar({ message: "Your book deleted successfully!" });
       addBookDialog.handleClose();
-    } else if (isError) {
-      () => snacbar({ message: `${addError}` });
+      refetch();
+    } else if (isErrorDeleted) {
+      () => snacbar({ message: `${deleteError}` });
     } else {
       () => snacbar({ message: "Oops, Something went wrong!" });
     }
   }, []);
-
+  // create book
+  const handleCreateBook = useCallback((data: any) => {
+    addBook
+      .postData({ data: data })
+      .then(() => snacbar({ message: "Book added bookshelf successfully!" }))
+      .then(() => refetch())
+      .then(() => addBookDialog.handleClose());
+    // AddBook(data);
+    // if (isSuccessCreated) {
+    //   () => snacbar({ message: "Book added bookshelf successfully!" });
+    //   addBookDialog.handleClose();
+    // } else if (isError) {
+    //   () => snacbar({ message: `${addError}` });
+    // } else {
+    //   () => snacbar({ message: "Oops, Something went wrong!" });
+    // }
+  }, []);
+// update book
   const handleUpdateStatusBook = useCallback(
     (id: number, book: any, status: number) => {
       statusBook
@@ -72,17 +90,6 @@ export const HomeContainer = () => {
     [],
   );
 
-  const handleDeleteBook = useCallback((id: number) => {
-    DeleteBook(id);
-    if (isSuccessDeleted) {
-      () => snacbar({ message: "Your book deleted successfully!" });
-      addBookDialog.handleClose();
-    } else if (isErrorDeleted) {
-      () => snacbar({ message: `${deleteError}` });
-    } else {
-      () => snacbar({ message: "Oops, Something went wrong!" });
-    }
-  }, []);
   useEffect(() => {}, [title]);
 
   return (
@@ -99,11 +106,9 @@ export const HomeContainer = () => {
                 color="primary"
                 sx={{ display: "inline", ml: 1 }}
               >
-
                 {!isLoading && data?.data?.length == 0
                   ? "no book please add book!"
-                  : (data?.data?.length ?? 0) + " book"
-                }
+                  : (data?.data?.length ?? 0) + " book"}
               </Typography>
             </FlexBox>
             <Typography variant="h5" color="grey.100" sx={{ mt: 1 }}>
