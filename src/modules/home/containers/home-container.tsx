@@ -1,93 +1,101 @@
-import React, { useCallback, useEffect } from 'react'
-import { Box, Button, Container, Grid, Typography } from '@mui/material'
-import FlexBox from 'components/main/flexbox'
-import AddIcon from '@mui/icons-material/Add'
-import { prop, propOr, pathOr } from 'ramda'
+import React, { useCallback, useEffect } from "react";
+import { Box, Button, Container, Grid, Typography } from "@mui/material";
+import FlexBox from "components/main/flexbox";
+import AddIcon from "@mui/icons-material/Add";
+import { prop, propOr, pathOr } from "ramda";
 
-import { BookCard } from '../../../components/card/book-card'
-import { BaseLayout } from '../../../layout'
-import useDialog from '../../../hooks/useDialog'
-import BookAddDialogue from '../components/book-add-dialogue'
-import { usePost } from '../../../hooks/usePost'
-import { createBook, deleteBook, getListBook, updateBook } from '../api/api'
-import { useGetList } from '../../../hooks/useGetList'
-import BookActionRowMenu from '../components/book-action-row'
-import { usePut } from '../../../hooks/usePut'
-import { useDelete } from '../../../hooks/useDelete'
-import { useSearchContext } from '../../../context/search'
-import Loader from '../../../components/loader/loader'
-import { useSnackbar } from '../../../context/snackbar'
-import {GetListResponse} from "../../../api/base-DTO"
-import { useGetProductsQuery } from 'store/rtk-query/productApi'
-import { useAddBookMutation, useDeleteBookMutation, useEditBookStatusMutation, useGetAllBooksQuery, useGetMySelfQuery } from 'store/rtk-query/book-query'
+import { BookCard } from "../../../components/card/book-card";
+import { BaseLayout } from "../../../layout";
+import useDialog from "../../../hooks/useDialog";
+import BookAddDialogue from "../components/book-add-dialogue";
+import {  getListBook, updateBook } from "../api/api";
+import { useGetList } from "../../../hooks/useGetList";
+import BookActionRowMenu from "../components/book-action-row";
+import { usePut } from "../../../hooks/usePut";
+import { useDelete } from "../../../hooks/useDelete";
+import { useSearchContext } from "../../../context/search";
+import Loader from "../../../components/loader/loader";
+import { useSnackbar } from "../../../context/snackbar";
+import { GetListResponse } from "../../../api/base-DTO";
+import { useGetProductsQuery } from "store/rtk-query/productApi";
+import {
+  useAddBookMutation,
+  useDeleteBookMutation,
+  useEditBookStatusMutation,
+  useGetAllBooksQuery,
+  useGetMySelfQuery,
+} from "store/rtk-query/book-query";
 
 export const HomeContainer = () => {
-  const addBookDialog = useDialog()
-  const getBookList = useGetList(getListBook)
-  const addBook = usePost(createBook)
-  const statusBook = usePut(updateBook)
-  const bookDelete = useDelete(deleteBook)
-  const snacbar = useSnackbar()
-  const loading = prop('loading', getBookList)
-  const list = prop('list', getBookList)
-  const { searchValue } = useSearchContext()
-  const title = propOr('', 'title', searchValue)
+  const addBookDialog = useDialog();
+  const statusBook = usePut(updateBook);
+  const snacbar = useSnackbar();
+  const { searchValue } = useSearchContext();
+  const title = propOr("", "title", searchValue);
 
+  const { data, isLoading,  refetch } = useGetAllBooksQuery({});
+  const { data:mySelfData,  } = useGetMySelfQuery({});
+  const [AddBook, { error: addError, isSuccess: isSuccessCreated, isError }] =
+    useAddBookMutation();
+  const [DeleteBook, { error: deleteError,isSuccess:isSuccessDeleted, isError:isErrorDeleted }] =
+    useDeleteBookMutation();
 
-  const  { data, isLoading, error }  =useGetAllBooksQuery({})
-  console.log(data ,"dataaaaaaaaaaaaaaa")
-  const  [AddBook, { error: addError, data: addData }]  =useAddBookMutation()
-  const  [DeleteBook, { error: deleteError, data: deleteData }]  =useDeleteBookMutation()
-  const  [EditBookStatus, { error: editError, data: editData }]  =useEditBookStatusMutation()
+  const handleCreateBook = useCallback(async  (data: any) => {
+    console.log(data , isSuccessCreated, "data");
+    await  AddBook(data);
   
-  const handleCreateBook = useCallback((data: any) => {
-    AddBook(data)
-    console.log( addData ,addError,"postBook");
-    if(true){
-      () => snacbar({ message: 'Book added bookshelf successfully!' })
-      addBookDialog.handleClose()
+    if (isSuccessCreated) {
+      () => snacbar({ message: "Book added bookshelf successfully!" });
+      addBookDialog.handleClose();
+    } else if (isError) {
+      () => snacbar({ message: `${addError}` });
+    } else {
+      () => snacbar({ message: "Oops, Something went wrong!" });
     }
-    // addBook
-    //   .postData({ data: data })
-    //   .then(() => snacbar({ message: 'Book added bookshelf successfully!' }))
-    //   .then(() => getBookList.getList())
-    //   .then(() => addBookDialog.handleClose())
-  }, [])
+  }, []);
 
-  const handleUpdateStatusBook = useCallback((id: number, book: any, status: number) => {
-   
-   console.log(id, book, status, "update")
-   EditBookStatus({id, book, status})
-   console.log(editData, "edit data")
-
-   snacbar({ message: 'Your book status updated successfully!' })
-    // statusBook
-    //   .putData({ params: { id }, data: { book, status } })
-    //   .then(() => snacbar({ message: 'Your book status updated successfully!' }))
-    //   .then(() => getBookList.getList())
-  }, [])
+  const handleUpdateStatusBook = useCallback(
+    (id: number, book: any, status: number) => {
+      statusBook
+        .putData({ params: { id }, data: { book, status } })
+        .then(() =>
+          snacbar({ message: "Your book status updated successfully!" }),
+        )
+        .then(() => refetch());
+    },
+    [],
+  );
 
   const handleDeleteBook = useCallback((id: number) => {
-    DeleteBook(id)
-    snacbar({ message: 'Your book deleted successfully!' })
-  }, [])
-  useEffect(() => {
-    const hasValue = title ? { query: { title } } : undefined
-    getBookList.getList(hasValue)
-  }, [title])
- 
+    DeleteBook(id);
+    if (isSuccessDeleted) {
+      () => snacbar({ message: "Your book deleted successfully!" });
+      addBookDialog.handleClose();
+    } else if (isErrorDeleted) {
+      () => snacbar({ message: `${deleteError}` });
+    } else {
+      () => snacbar({ message: "Oops, Something went wrong!" });
+    }
+  }, []);
+  useEffect(() => {}, [title]);
 
   return (
     <BaseLayout>
-      <Container maxWidth={'xl'}>
+      <Container maxWidth={"xl"}>
         <FlexBox align="flex-start" justify="space-between" sx={{ my: 2 }}>
           <Box>
             <FlexBox>
               <Typography variant="h3" color="grey.100">
                 You’ve got
               </Typography>
-              <Typography variant="h3" color="primary" sx={{ display: 'inline', ml: 1 }}>
-                {!isLoading && data?.data?.length === 0 ? 'no book please add book!' :  data?.data?.length + ' book'}
+              <Typography
+                variant="h3"
+                color="primary"
+                sx={{ display: "inline", ml: 1 }}
+              >
+                {!isLoading && data?.data?.length === 0
+                  ? "no book please add book!"
+                  : data?.data?.length + " book"}
               </Typography>
             </FlexBox>
             <Typography variant="h5" color="grey.100" sx={{ mt: 1 }}>
@@ -106,12 +114,12 @@ export const HomeContainer = () => {
         <Grid container spacing={2} alignItems="center">
           {!isLoading &&
             data?.data?.map((item: any) => {
-              const id = pathOr('id', ['book', 'isbn'], item)
-              const book = prop('book', item)
-              const status = prop('status', item)
-              const searchBook = book || item
+              const id = pathOr("id", ["book", "isbn"], item);
+              const book = prop("book", item);
+              const status = prop("status", item);
+              const searchBook = book || item;
               return (
-                <Grid item lg={'auto'} key={id}>
+                <Grid item lg={"auto"} key={id}>
                   <BookCard
                     key={id}
                     book={searchBook}
@@ -126,7 +134,7 @@ export const HomeContainer = () => {
                     )}
                   />
                 </Grid>
-              )
+              );
             })}
         </Grid>
         {isLoading && <Loader />}
@@ -140,5 +148,5 @@ export const HomeContainer = () => {
         />
       )}
     </BaseLayout>
-  )
-}
+  );
+};

@@ -69,7 +69,7 @@ export const bookApi = createApi({
         body: { status, book },
         headers: {
           "Key": `${mykeys?.key}`,
-          "Sign": `${md5(`PATCH${'/books/' + id}${book ? JSON.stringify(book) : ''}` + mykeys?.secret)}`
+          "Sign": `${md5(`PATCH${'/books/' + id}${JSON.stringify({book: {...book}, status: status})}` + mykeys?.secret)}`
         }
       }),
       invalidatesTags: ['Books'],

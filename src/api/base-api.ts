@@ -16,7 +16,7 @@ const queryToString = (query: object = {}): string => {
 
 const createRequestOptions = (url: string, options: AxiosRequestConfig): AxiosRequestConfig => {
   const { headers, method, data } = options
-  console.log(options, "optionsssssssssssssssss");
+  console.log(options, "optionsssssssssssssssss" ,data);
   console.log(url, "url");
   
   const token = localStorage.getItem('book-token')
