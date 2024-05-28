@@ -93,9 +93,11 @@ export const HomeContainer = () => {
                 color="primary"
                 sx={{ display: "inline", ml: 1 }}
               >
-                {!isLoading && data?.data?.length === 0
+                {isLoading && data?.data?.length == 0
                   ? "no book please add book!"
-                  : data?.data?.length + " book"}
+                  : data?.data?.length + " book"
+                  
+                }
               </Typography>
             </FlexBox>
             <Typography variant="h5" color="grey.100" sx={{ mt: 1 }}>
