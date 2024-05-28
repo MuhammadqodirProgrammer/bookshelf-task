@@ -17,8 +17,9 @@ import { useDelete } from '../../../hooks/useDelete'
 import { useSearchContext } from '../../../context/search'
 import Loader from '../../../components/loader/loader'
 import { useSnackbar } from '../../../context/snackbar'
+import {GetListResponse} from "../../../api/base-DTO"
 import { useGetProductsQuery } from 'store/rtk-query/productApi'
-import { useAddBookMutation, useGetAllBooksQuery, useGetMySelfQuery } from 'store/rtk-query/book-query'
+import { useAddBookMutation, useDeleteBookMutation, useEditBookStatusMutation, useGetAllBooksQuery, useGetMySelfQuery } from 'store/rtk-query/book-query'
 
 export const HomeContainer = () => {
   const addBookDialog = useDialog()
@@ -32,35 +33,49 @@ export const HomeContainer = () => {
   const { searchValue } = useSearchContext()
   const title = propOr('', 'title', searchValue)
 
-  const handleCreateBook = useCallback((values: any) => {
-    addBook
-      .postData({ data: values })
-      .then(() => snacbar({ message: 'Book added bookshelf successfully!' }))
-      .then(() => getBookList.getList())
-      .then(() => addBookDialog.handleClose())
+
+  const  { data, isLoading, error }  =useGetAllBooksQuery({})
+  console.log(data ,"dataaaaaaaaaaaaaaa")
+  const  [AddBook, { error: addError, data: addData }]  =useAddBookMutation()
+  const  [DeleteBook, { error: deleteError, data: deleteData }]  =useDeleteBookMutation()
+  const  [EditBookStatus, { error: editError, data: editData }]  =useEditBookStatusMutation()
+  
+  const handleCreateBook = useCallback((data: any) => {
+    AddBook(data)
+    console.log( addData ,addError,"postBook");
+    if(true){
+      () => snacbar({ message: 'Book added bookshelf successfully!' })
+      addBookDialog.handleClose()
+    }
+    // addBook
+    //   .postData({ data: data })
+    //   .then(() => snacbar({ message: 'Book added bookshelf successfully!' }))
+    //   .then(() => getBookList.getList())
+    //   .then(() => addBookDialog.handleClose())
   }, [])
 
   const handleUpdateStatusBook = useCallback((id: number, book: any, status: number) => {
-    statusBook
-      .putData({ params: { id }, data: { book, status } })
-      .then(() => snacbar({ message: 'Your book status updated successfully!' }))
-      .then(() => getBookList.getList())
+   
+   console.log(id, book, status, "update")
+   EditBookStatus({id, book, status})
+   console.log(editData, "edit data")
+
+   snacbar({ message: 'Your book status updated successfully!' })
+    // statusBook
+    //   .putData({ params: { id }, data: { book, status } })
+    //   .then(() => snacbar({ message: 'Your book status updated successfully!' }))
+    //   .then(() => getBookList.getList())
   }, [])
 
   const handleDeleteBook = useCallback((id: number) => {
-    bookDelete
-      .deleteData({ params: { id } })
-      .then(() => snacbar({ message: 'Your book deleted successfully!' }))
-      .then(() => getBookList.getList())
+    DeleteBook(id)
+    snacbar({ message: 'Your book deleted successfully!' })
   }, [])
   useEffect(() => {
     const hasValue = title ? { query: { title } } : undefined
     getBookList.getList(hasValue)
   }, [title])
-  const filters = { category: '' }; // Example filter object
-  const  { data, isLoading, error }  =useGetMySelfQuery({})
-  const  [AddBook, { error: addError, data: addData }]  =useAddBookMutation()
-console.log(AddBook({isbn: "isbn20"}), addData ,addError,"postBook");
+ 
 
   return (
     <BaseLayout>
@@ -72,7 +87,7 @@ console.log(AddBook({isbn: "isbn20"}), addData ,addError,"postBook");
                 You’ve got
               </Typography>
               <Typography variant="h3" color="primary" sx={{ display: 'inline', ml: 1 }}>
-                {!loading && list.length === 0 ? 'no book please add book!' : list.length + ' book'}
+                {!isLoading && data?.data?.length === 0 ? 'no book please add book!' :  data?.data?.length + ' book'}
               </Typography>
             </FlexBox>
             <Typography variant="h5" color="grey.100" sx={{ mt: 1 }}>
@@ -89,8 +104,8 @@ console.log(AddBook({isbn: "isbn20"}), addData ,addError,"postBook");
           </Button>
         </FlexBox>
         <Grid container spacing={2} alignItems="center">
-          {!loading &&
-            list.map((item) => {
+          {!isLoading &&
+            data?.data?.map((item: any) => {
               const id = pathOr('id', ['book', 'isbn'], item)
               const book = prop('book', item)
               const status = prop('status', item)
@@ -114,7 +129,7 @@ console.log(AddBook({isbn: "isbn20"}), addData ,addError,"postBook");
               )
             })}
         </Grid>
-        {loading && <Loader />}
+        {isLoading && <Loader />}
       </Container>
       {addBookDialog.open && (
         <BookAddDialogue
