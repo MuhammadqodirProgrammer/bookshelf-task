@@ -8,7 +8,7 @@ import { BookCard } from "../../../components/card/book-card";
 import { BaseLayout } from "../../../layout";
 import useDialog from "../../../hooks/useDialog";
 import BookAddDialogue from "../components/book-add-dialogue";
-import {  getListBook, updateBook } from "../api/api";
+import {  createBook, getListBook, updateBook } from "../api/api";
 import { useGetList } from "../../../hooks/useGetList";
 import BookActionRowMenu from "../components/book-action-row";
 import { usePut } from "../../../hooks/usePut";
@@ -25,10 +25,12 @@ import {
   useGetAllBooksQuery,
   useGetMySelfQuery,
 } from "store/rtk-query/book-query";
+import { usePost } from "hooks/usePost";
 
 export const HomeContainer = () => {
   const addBookDialog = useDialog();
   const statusBook = usePut(updateBook);
+  const addBook = usePost(createBook)
   const snacbar = useSnackbar();
   const { searchValue } = useSearchContext();
   const title = propOr("", "title", searchValue);
@@ -43,7 +45,11 @@ export const HomeContainer = () => {
   const handleCreateBook = useCallback(  (data: any) => {
     console.log(data , isSuccessCreated, "data");
       AddBook(data);
-  
+   addBook
+      .postData({ data: data })
+      .then(() => snacbar({ message: 'Book added bookshelf successfully!' }))
+      .then(() => refetch())
+      .then(() => addBookDialog.handleClose())
     if (isSuccessCreated) {
       () => snacbar({ message: "Book added bookshelf successfully!" });
       addBookDialog.handleClose();
